@@ -10,7 +10,7 @@ class KernelTest {
 
     private val increaseTick = {tick++}
     private val emptyLoop = suspend {}
-    private val runOncePerTickSchduler = object : ScreepsOSScheduler {
+    private val runOncePerTickScheduler = object : ScreepsOSScheduler {
         var lastTick = -1
 
         override fun getNextJob(context: CoroutineContext, block: Runnable): Runnable? {
@@ -28,7 +28,7 @@ class KernelTest {
 
     @Test
     fun ticksAreUpdating() {
-        Kernel.create(increaseTick, emptyLoop, runOncePerTickSchduler)
+        Kernel.create(increaseTick, emptyLoop, runOncePerTickScheduler)
         tick = 0
 
         Kernel.loop()
@@ -47,7 +47,7 @@ class KernelTest {
             countUpwards()
         }
 
-        Kernel.create(increaseTick, loop, runOncePerTickSchduler)
+        Kernel.create(increaseTick, loop, runOncePerTickScheduler)
 
         assertEquals(0, counter)
         Kernel.loop()
