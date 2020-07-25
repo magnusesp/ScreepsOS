@@ -5,7 +5,7 @@ import kotlinx.coroutines.launch
 class Kernel(
     private val tickUpdateFunction: () -> Int,
     private val loopFunction: suspend () -> Unit,
-    private val dispatcherObject: ScreepsOSScheduler
+    private val dispatcherScheduler: ScreepsOSScheduler
 ) {
 
     fun loop() {
@@ -22,7 +22,7 @@ class Kernel(
     fun getTick() = currentTick
 
     // Dispatcher
-    fun getDispatcher() = dispatcherObject
+    fun getSchduler() = dispatcherScheduler
 
     companion object {
         private var kernel: Kernel? = null
@@ -30,8 +30,8 @@ class Kernel(
         fun create(
             tickUpdateFunction: () -> Int,
             loopFunction: suspend () -> Unit,
-            dispatcherObject: ScreepsOSScheduler) {
-            kernel = Kernel(tickUpdateFunction, loopFunction, dispatcherObject)
+            schedulerObject: ScreepsOSScheduler) {
+            kernel = Kernel(tickUpdateFunction, loopFunction, schedulerObject)
         }
 
         fun loop() = kernel?.loop()
@@ -40,7 +40,7 @@ class Kernel(
         fun getTick() = kernel?.getTick()
             ?: throw KernelNotCreatedException()
 
-        fun getScheduler() = kernel?.getDispatcher()
+        fun getScheduler() = kernel?.getSchduler()
             ?: throw KernelNotCreatedException()
 
         fun reset() {
