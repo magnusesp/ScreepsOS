@@ -1,6 +1,6 @@
 package screeps.os
 
-class ParentProcess(parent: Process?, pri: Int) : Process(parent, pri) {
+class ParentProcess(parent: Process?, pri: Int) : Process(pri) {
     private val children = mutableSetOf<Process>()
     private val runQueue = mutableListOf<Process>()
     private val sleepingChildren = mutableListOf<Process>()

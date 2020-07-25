@@ -12,7 +12,7 @@ abstract class Process(private var pri: Int) {
     }
 
     abstract fun ready(): Boolean
-    abstract suspend fun run() : Signal
+    abstract fun run() : Signal
 
     fun getPid() = pid
     fun getPriority() = pri
@@ -22,12 +22,4 @@ abstract class Process(private var pri: Int) {
     }
 
     open fun destructor() {}
-
-    companion object {
-        private var currentTick: Int = 0
-        protected fun getTick() = currentTick
-        fun setTick(tick: Int) {
-            currentTick = tick
-        }
-    }
 }
