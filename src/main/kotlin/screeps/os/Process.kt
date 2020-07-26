@@ -21,5 +21,10 @@ abstract class Process(private var pri: Int) {
         wakeUpAt = until
     }
 
+    suspend fun wait(condition: () -> Boolean, retryTicks: Int) {
+        while(!condition.invoke())
+            sleepUntil(Kernel.getTick() + retryTicks)
+    }
+
     open fun destructor() {}
 }
