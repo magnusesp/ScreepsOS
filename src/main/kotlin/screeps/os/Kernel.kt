@@ -23,7 +23,7 @@ open class Kernel(private val tickFunction: () -> Int) {
 
         program.setProcess(process)
 
-        val  body: suspend () -> Unit = { program.execute() }
+        val body: suspend () -> Unit = { program.execute() }
         continuations[process.pid] = body.createCoroutine(Continuation(process) {}).unsafeCast<Continuation<Any?>>()
 
         scheduler.addProcess(process)
