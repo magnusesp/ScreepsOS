@@ -18,8 +18,7 @@ class KernelTest {
         mockGameObject.tick = 0
         mockGameObject.cpu = 0
 
-        kernel = Kernel {mockGameObject.tick++}
-        Kernel.setKernel(kernel)
+        kernel = Kernel.create {mockGameObject.tick++}
 
         val scheduler = ExampleScheduler(kernel)
 

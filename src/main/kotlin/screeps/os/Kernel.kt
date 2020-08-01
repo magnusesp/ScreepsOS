@@ -11,17 +11,11 @@ open class Kernel(private val tickFunction: () -> Int) {
     private val continuations = mutableMapOf<Int, Continuation<Any?>>()
 
     private var _scheduler: Scheduler? = null
-    private var scheduler: Scheduler
+    private val scheduler: Scheduler
         get() = _scheduler ?: throw NoSchedulerSetException()
-        set(sched) {
-            if(_scheduler != null)
-                throw SchedulerAlreadySetException()
 
-            _scheduler = sched
-        }
-
-    fun setScheduler(sched: Scheduler) {
-        scheduler = sched
+    fun setScheduler(scheduler: Scheduler) {
+        _scheduler = scheduler
     }
 
     fun spawnProcess(program: Program, priority: Int): Int {
@@ -37,9 +31,7 @@ open class Kernel(private val tickFunction: () -> Int) {
         return process.pid
     }
 
-
     fun loop() {
-        println("Kernel loop() starting")
         tick = tickFunction.invoke()
 
         scheduler.preLoopSetup()
@@ -47,14 +39,13 @@ open class Kernel(private val tickFunction: () -> Int) {
         var pid: Int? = scheduler.getNextPid()
 
         while(pid != null) {
-            println("Running pid $pid")
-
             continuations[pid]?.resume(Unit)
                     ?: throw NoSuchProcessException("Kernel doesn't have a continuation for pid $pid")
 
             pid = scheduler.getNextPid()
         }
     }
+
     fun storeContinuation(continuation: Continuation<Any?>) {
         val process = continuation.context[Process.Key]
                 ?: throw NoProcessContextException("Continuation $continuation is missing a Process context")
@@ -69,22 +60,19 @@ open class Kernel(private val tickFunction: () -> Int) {
 
     fun getTick() = tick
 
-
     companion object {
         private var _kernel: Kernel? = null
 
         val kernel: Kernel
             get() = _kernel ?: throw NoKernelSetException()
 
-        fun setKernel(kern: Kernel) {
-            _kernel = kern
+        fun create(tickFunction: () -> Int) : Kernel {
+            _kernel = Kernel(tickFunction)
+            return kernel
         }
-
-
     }
 }
 
-class SchedulerAlreadySetException : Exception("The kernel already has a scheduler")
 class NoKernelSetException : Exception("Kernel hasn't been set")
 class NoSchedulerSetException : Exception("Kernel has no scheduler")
 class NoSuchProcessException(message: String) : Exception(message)

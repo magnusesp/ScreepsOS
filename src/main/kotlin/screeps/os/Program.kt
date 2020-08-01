@@ -5,11 +5,11 @@ import kotlin.coroutines.intrinsics.suspendCoroutineUninterceptedOrReturn
 
 
 abstract class Program {
+    open fun getProgramName() = this::class.simpleName
+
     private var _process: Process? = null
     private val process: Process
         get() = _process ?: throw ProcessNotSetException("Program ${getProgramName()} has no process")
-
-    open fun getProgramName() = this::class.simpleName
 
     fun setProcess(proc: Process) {
         if(_process != null)
