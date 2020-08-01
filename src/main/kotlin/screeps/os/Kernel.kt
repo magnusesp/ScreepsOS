@@ -1,52 +1,91 @@
 package screeps.os
 
-import kotlinx.coroutines.launch
+import kotlin.coroutines.Continuation
+import kotlin.coroutines.createCoroutine
+import kotlin.coroutines.resume
 
-class Kernel(
-    private val tickUpdateFunction: () -> Int,
-    private val loopFunction: suspend () -> Unit,
-    private val dispatcherScheduler: ScreepsOSScheduler
-) {
+open class Kernel(private val tickFunction: () -> Int) {
+    private var tick = 0
+
+    private var nextPid = 0
+    private val continuations = mutableMapOf<Int, Continuation<Any?>>()
+
+    private var _scheduler: Scheduler? = null
+    private var scheduler: Scheduler
+        get() = _scheduler ?: throw NoSchedulerSetException()
+        set(sched) {
+            if(_scheduler != null)
+                throw SchedulerAlreadySetException()
+
+            _scheduler = sched
+        }
+
+    fun setScheduler(sched: Scheduler) {
+        scheduler = sched
+    }
+
+    fun spawnProcess(program: Program, priority: Int): Int {
+        val process = Process(nextPid++, priority, scheduler)
+
+        program.setProcess(process)
+
+        val  body: suspend () -> Unit = { program.execute() }
+        continuations[process.pid] = body.createCoroutine(Continuation(process) {}).unsafeCast<Continuation<Any?>>()
+
+        scheduler.addProcess(process)
+
+        return process.pid
+    }
+
 
     fun loop() {
-        currentTick = tickUpdateFunction.invoke()
+        println("Kernel loop() starting")
+        tick = tickFunction.invoke()
 
-        ScreepsOSScope.launch {
-            loopFunction.invoke()
+        scheduler.preLoopSetup()
+
+        var pid: Int? = scheduler.getNextPid()
+
+        while(pid != null) {
+            println("Running pid $pid")
+
+            continuations[pid]?.resume(Unit)
+                    ?: throw NoSuchProcessException("Kernel doesn't have a continuation for pid $pid")
+
+            pid = scheduler.getNextPid()
         }
     }
+    fun storeContinuation(continuation: Continuation<Any?>) {
+        val process = continuation.context[Process.Key]
+                ?: throw NoProcessContextException("Continuation $continuation is missing a Process context")
 
+        continuations[process.pid] = continuation
+    }
 
-    // Ticks
-    private var currentTick: Int = 0
-    fun getTick() = currentTick
+    fun killProcess(pid: Int) {
+        continuations.remove(pid)
+        scheduler.removeProcess(pid)
+    }
 
-    // Dispatcher
-    fun getSchduler() = dispatcherScheduler
+    fun getTick() = tick
+
 
     companion object {
-        private var kernel: Kernel? = null
+        private var _kernel: Kernel? = null
 
-        fun create(
-            tickUpdateFunction: () -> Int,
-            loopFunction: suspend () -> Unit,
-            schedulerObject: ScreepsOSScheduler) {
-            kernel = Kernel(tickUpdateFunction, loopFunction, schedulerObject)
+        val kernel: Kernel
+            get() = _kernel ?: throw NoKernelSetException()
+
+        fun setKernel(kern: Kernel) {
+            _kernel = kern
         }
 
-        fun loop() = kernel?.loop()
-            ?: throw KernelNotCreatedException()
 
-        fun getTick() = kernel?.getTick()
-            ?: throw KernelNotCreatedException()
-
-        fun getScheduler() = kernel?.getSchduler()
-            ?: throw KernelNotCreatedException()
-
-        fun reset() {
-            kernel = null
-        }
     }
-
-    class KernelNotCreatedException : Exception("No kernel created by create(), or it has been reset()")
 }
+
+class SchedulerAlreadySetException : Exception("The kernel already has a scheduler")
+class NoKernelSetException : Exception("Kernel hasn't been set")
+class NoSchedulerSetException : Exception("Kernel has no scheduler")
+class NoSuchProcessException(message: String) : Exception(message)
+class NoProcessContextException(message: String) : Exception(message)

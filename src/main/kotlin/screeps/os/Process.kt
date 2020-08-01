@@ -1,30 +1,21 @@
 package screeps.os
 
-abstract class Process(private var pri: Int) {
+import kotlin.coroutines.Continuation
+import kotlin.coroutines.CoroutineContext
 
-    private val pid = 0
+class Process(val pid: Int, private var pri: Int, private val scheduler: Scheduler) : CoroutineContext.Element {
+    object Key : CoroutineContext.Key<Process>
+
+    override val key = Key
+
     private var wakeUpAt = 0
 
-    private var parent: Process? = null
-    fun getParent() = parent
-    fun setParent(process: Process) {
-        parent = process
-    }
-
-    abstract fun ready(): Boolean
-    abstract fun run() : Signal
-
-    fun getPid() = pid
     fun getPriority() = pri
     fun readyAt() = wakeUpAt
     fun sleepUntil(until: Int) {
         wakeUpAt = until
+        scheduler.putProcessToSleep(this)
     }
 
-    suspend fun wait(condition: () -> Boolean, retryTicks: Int) {
-        while(!condition.invoke())
-            sleepUntil(Kernel.getTick() + retryTicks)
-    }
-
-    open fun destructor() {}
+    fun runOrSuspend(continuation: Continuation<Any?>) = scheduler.runOrSuspend(continuation)
 }
