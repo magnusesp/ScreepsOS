@@ -30,6 +30,8 @@ class ExampleScheduler(kernel: Kernel) : Scheduler(kernel) {
 
     }
 
+    override fun processChangedPriority() = reorderRunQueue()
+
     override fun preLoopSetup() {
         mockGameObject.cpu = 0
         wakeSleepingProcesses()

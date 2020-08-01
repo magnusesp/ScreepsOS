@@ -17,6 +17,8 @@ abstract class Program {
         _process = proc
     }
 
+    fun changePriority(priority: Int) = process.changePriority(priority)
+
     suspend fun yield(): Any? = suspendCoroutine { continuation ->
         Kernel.kernel.storeContinuation(continuation)
     }

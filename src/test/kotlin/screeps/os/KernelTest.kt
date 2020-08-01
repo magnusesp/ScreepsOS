@@ -109,6 +109,48 @@ class KernelTest {
     }
 
     @Test
+    fun changingPriorities() {
+
+        val programA = RunningProgram()
+        kernel.spawnProcess(programA, 10)
+
+        val programB = RunningProgram()
+        kernel.spawnProcess(programB, 20)
+
+        assertEquals(0, programA.executions)
+        assertEquals(0, programB.executions)
+
+        kernel.loop()
+        assertEquals(5, programA.executions)
+        assertEquals(0, programB.executions)
+
+        kernel.loop()
+        assertEquals(10, programA.executions)
+        assertEquals(0, programB.executions)
+
+        programA.changePriority(30)
+
+        kernel.loop()
+        assertEquals(10, programA.executions)
+        assertEquals(5, programB.executions)
+
+        programB.changePriority(40)
+
+        kernel.loop()
+        assertEquals(15, programA.executions)
+        assertEquals(5, programB.executions)
+
+
+        programB.changePriority(5)
+
+        kernel.loop()
+        assertEquals(15, programA.executions)
+        assertEquals(10, programB.executions)
+
+
+    }
+
+    @Test
     fun spawnAndKill() {
         val shortLivingProgram = SleepingProgram()
         val shortLivingPid1 = kernel.spawnProcess(shortLivingProgram, 10)
@@ -174,7 +216,6 @@ class KernelTest {
         assertEquals(7, sleepingProgram.executions)
 
     }
-
 }
 
 
