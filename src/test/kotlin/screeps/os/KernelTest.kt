@@ -7,24 +7,60 @@ class KernelTest {
 
     private lateinit var kernel: Kernel
 
-    object mockGameObject : MockGameObject {
+    object MockGameObj : MockGameObject {
         override var tick = 0
         override var cpu = 0
         override var cpuLimit = 5
     }
 
+    abstract class TestProgram : Program() {
+        var executions = 0
+
+        protected fun print(nextState: String) {
+            println("${getProgramName()} executing for the ${++executions}. time. $nextState")
+        }
+    }
+
+    class SleepingProgram : TestProgram() {
+        override suspend fun execute() {
+            while(true) {
+                print("Sleeping 1 tick")
+                sleep(1)
+            }
+        }
+    }
+
+    class RunningProgram : TestProgram() {
+        override suspend fun execute() {
+            while(true) {
+                print("Yielding")
+                yield()
+            }
+        }
+    }
+
+    class WaitingProgram(private val condition: () -> Boolean) : TestProgram() {
+        override suspend fun execute() {
+            while(true) {
+                print("Waiting")
+                wait(condition)
+                sleep(1)
+            }
+        }
+    }
+
     @BeforeTest
     fun reset() {
-        mockGameObject.tick = 0
-        mockGameObject.cpu = 0
+        MockGameObj.tick = 0
+        MockGameObj.cpu = 0
 
-        kernel = Kernel.create {mockGameObject.tick++}
+        kernel = Kernel.create {MockGameObj.tick++}
 
         val scheduler = ExampleScheduler(kernel)
 
         kernel.setScheduler(scheduler)
 
-        scheduler.setGameObject(mockGameObject)
+        scheduler.setGameObject(MockGameObj)
     }
 
     @Test
@@ -39,7 +75,6 @@ class KernelTest {
 
         kernel.loop()
         assertEquals(2, kernel.getTick())
-
     }
 
     @Test
@@ -57,7 +92,6 @@ class KernelTest {
 
         kernel.loop()
         assertEquals(3, testProgram.executions)
-
     }
 
     @Test
@@ -110,7 +144,6 @@ class KernelTest {
 
     @Test
     fun changingPriorities() {
-
         val programA = RunningProgram()
         kernel.spawnProcess(programA, 10)
 
@@ -140,23 +173,22 @@ class KernelTest {
         assertEquals(15, programA.executions)
         assertEquals(5, programB.executions)
 
-
         programB.changePriority(5)
 
         kernel.loop()
         assertEquals(15, programA.executions)
         assertEquals(10, programB.executions)
-
-
     }
 
     @Test
     fun spawnAndKill() {
-        val shortLivingProgram = SleepingProgram()
-        val shortLivingPid1 = kernel.spawnProcess(shortLivingProgram, 10)
+        val shortLivingProgramA = SleepingProgram()
+        val shortLivingPidA = kernel.spawnProcess(shortLivingProgramA, 10)
+
+        assertEquals(0, shortLivingProgramA.executions)
 
         kernel.loop()
-        assertEquals(1, shortLivingProgram.executions)
+        assertEquals(1, shortLivingProgramA.executions)
 
         val longLivingProgram = SleepingProgram()
         kernel.spawnProcess(longLivingProgram, 10)
@@ -164,19 +196,40 @@ class KernelTest {
         assertEquals(0, longLivingProgram.executions)
 
         kernel.loop()
-        assertEquals(2, shortLivingProgram.executions)
+        assertEquals(2, shortLivingProgramA.executions)
         assertEquals(1, longLivingProgram.executions)
 
-        kernel.killProcess(shortLivingPid1)
+        kernel.killProcess(shortLivingPidA)
 
         kernel.loop()
-        assertEquals(2, shortLivingProgram.executions)
+        assertEquals(2, shortLivingProgramA.executions)
         assertEquals(2, longLivingProgram.executions)
 
+        kernel.loop()
+        assertEquals(2, shortLivingProgramA.executions)
+        assertEquals(3, longLivingProgram.executions)
+
+        val shortLivingProgramB = SleepingProgram()
+        val shortLivingPidB = kernel.spawnProcess(shortLivingProgramB, 10)
+
+        assertEquals(0, shortLivingProgramB.executions)
 
         kernel.loop()
-        assertEquals(2, shortLivingProgram.executions)
-        assertEquals(3, longLivingProgram.executions)
+        assertEquals(2, shortLivingProgramA.executions)
+        assertEquals(4, longLivingProgram.executions)
+        assertEquals(1, shortLivingProgramB.executions)
+
+        kernel.loop()
+        assertEquals(2, shortLivingProgramA.executions)
+        assertEquals(5, longLivingProgram.executions)
+        assertEquals(2, shortLivingProgramB.executions)
+
+        kernel.killProcess(shortLivingPidB)
+
+        kernel.loop()
+        assertEquals(2, shortLivingProgramA.executions)
+        assertEquals(6, longLivingProgram.executions)
+        assertEquals(2, shortLivingProgramB.executions)
     }
 
     @Test
@@ -214,43 +267,5 @@ class KernelTest {
         kernel.loop()
         assertEquals(3, waitingProgram.executions)
         assertEquals(7, sleepingProgram.executions)
-
-    }
-}
-
-
-abstract class TestProgram : Program() {
-    var executions = 0
-
-    protected fun print(nextState: String) {
-        println("${getProgramName()} executing for the ${++executions}. time. $nextState")
-    }
-}
-
-class SleepingProgram : TestProgram() {
-    override suspend fun execute() {
-        while(true) {
-            print("Sleeping 1 tick")
-            sleep(1)
-        }
-    }
-}
-
-class RunningProgram : TestProgram() {
-    override suspend fun execute() {
-        while(true) {
-            print("Yielding")
-            yield()
-        }
-    }
-}
-
-class WaitingProgram(private val condition: () -> Boolean) : TestProgram() {
-    override suspend fun execute() {
-        while(true) {
-            print("Waiting")
-            wait(condition)
-            sleep(1)
-        }
     }
 }
