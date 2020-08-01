@@ -42,25 +42,6 @@ class ExampleScheduler(kernel: Kernel) : Scheduler(kernel) {
 
     override fun getNextPid() = if(shouldContinue()) runQueue.firstOrNull()?.pid else null
 
-    override fun runOrSuspend(continuation: Continuation<Any?>): Any? {
-        println("inside runOrSuspend")
-
-        // get data about the specific coroutine from the continuation
-        // this could be used to treat some coroutines differently
-        val process = continuation.context[Process.Key]
-                ?: throw NoProcessContextException("Continuation $continuation is missing a Process context")
-
-        if(!shouldContinue() || runQueue.firstOrNull()?.pid != process.pid) {
-            println("suspending pid ${process.pid}")
-            kernel.storeContinuation(continuation)
-            return COROUTINE_SUSPENDED
-        }
-
-        println("continuing to run pid ${process.pid}")
-
-        return Unit
-    }
-
     private fun reorderRunQueue() = runQueue.sortBy { it.getPriority() }
 
     private fun wakeSleepingProcesses() {

@@ -1,11 +1,10 @@
 package screeps.os
 
-import kotlin.coroutines.Continuation
-import kotlin.coroutines.intrinsics.suspendCoroutineUninterceptedOrReturn
+import kotlin.coroutines.suspendCoroutine
 
 
 abstract class Program {
-    open fun getProgramName() = this::class.simpleName
+    open fun getProgramName() = "${this::class.simpleName} (${_process?.pid})"
 
     private var _process: Process? = null
     private val process: Process
@@ -18,12 +17,8 @@ abstract class Program {
         _process = proc
     }
 
-    suspend fun yield(): Unit = suspendCoroutineUninterceptedOrReturn { continuation ->
-        val process = continuation.context[Process.Key]
-                ?: throw NoProcessContextException("Continuation $continuation is missing a Process context")
-                        // todo unssafeCast
-
-        process.runOrSuspend(continuation.unsafeCast<Continuation<Any?>>())
+    suspend fun yield(): Any? = suspendCoroutine { continuation ->
+        Kernel.kernel.storeContinuation(continuation)
     }
 
     suspend fun sleep(ticks: Int) {
@@ -32,9 +27,8 @@ abstract class Program {
     }
 
     suspend fun wait(condition: () -> Boolean, checkInterval: Int = 1) {
-        while (!condition.invoke()) {
+        while (!condition.invoke())
             sleep(checkInterval)
-        }
     }
 
     abstract suspend fun execute()

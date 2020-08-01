@@ -16,6 +16,4 @@ class Process(val pid: Int, private var pri: Int, private val scheduler: Schedul
         wakeUpAt = until
         scheduler.putProcessToSleep(this)
     }
-
-    fun runOrSuspend(continuation: Continuation<Any?>) = scheduler.runOrSuspend(continuation)
 }
