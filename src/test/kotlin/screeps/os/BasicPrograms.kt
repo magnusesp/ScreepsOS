@@ -8,7 +8,7 @@ abstract class TestProgram : Program() {
     }
 }
 
-class SleepingProgram : TestProgram() {
+open class SleepingProgram : TestProgram() {
     override suspend fun execute() {
         while(true) {
             print("Sleeping 1 tick")
