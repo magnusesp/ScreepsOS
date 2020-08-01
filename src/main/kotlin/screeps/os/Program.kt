@@ -23,9 +23,12 @@ abstract class Program {
         Kernel.kernel.storeContinuation(continuation)
     }
 
-    suspend fun sleep(ticks: Int) {
+    suspend fun sleep(ticks: Int): Any? = suspendCoroutine { continuation ->
+        val process = continuation.context[Process.Key]
+                ?: throw NoProcessContextException("Continuation $continuation is missing a Process context")
+
         process.sleepUntil(Kernel.kernel.getTick() + ticks)
-        yield()
+        Kernel.kernel.storeContinuation(continuation)
     }
 
     suspend fun wait(condition: () -> Boolean, checkInterval: Int = 1) {
