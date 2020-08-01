@@ -19,4 +19,6 @@ class Process(val pid: Int, private var priority: Int, private val scheduler: Sc
         wakeUpAt = until
         scheduler.putProcessToSleep(this)
     }
+
+    fun exit() = Kernel.kernel.killProcess(pid)
 }
