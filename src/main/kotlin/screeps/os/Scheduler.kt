@@ -1,7 +1,5 @@
 package screeps.os
 
-import kotlin.coroutines.Continuation
-
 abstract class Scheduler(protected val kernel: Kernel) {
     abstract fun addProcess(process: Process)
     abstract fun removeProcess(pid: Int)

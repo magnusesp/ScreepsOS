@@ -1,8 +1,5 @@
 package screeps.os
 
-import kotlin.coroutines.Continuation
-import kotlin.coroutines.intrinsics.COROUTINE_SUSPENDED
-
 class ExampleScheduler(kernel: Kernel) : Scheduler(kernel) {
     private val processes = mutableMapOf<Int, Process>()
     private val runQueue = mutableListOf<Process>() // TODO Should be a heap

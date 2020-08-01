@@ -1,6 +1,5 @@
 package screeps.os
 
-import kotlin.coroutines.Continuation
 import kotlin.coroutines.CoroutineContext
 
 class Process(val pid: Int, private var pri: Int, private val scheduler: Scheduler) : CoroutineContext.Element {
