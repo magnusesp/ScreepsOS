@@ -1,5 +1,10 @@
 package screeps.os
 
+import screeps.os.yield
+import screeps.os.sleep
+import screeps.os.wait
+import screeps.os.exit
+
 class ProviderProgram : SleepingProgram() {
 
     suspend fun getXExecutionIds(amount: Int) : List<Int> {

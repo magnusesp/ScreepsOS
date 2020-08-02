@@ -1,5 +1,10 @@
 package screeps.os
 
+import screeps.os.yield
+import screeps.os.sleep
+import screeps.os.wait
+import screeps.os.exit
+
 abstract class TestProgram : Program() {
     var executions = 0
 
@@ -34,4 +39,18 @@ class WaitingProgram(private val condition: () -> Boolean) : TestProgram() {
             sleep(1)
         }
     }
+}
+
+class ExitingProgram(private val runFor: Int) : TestProgram() {
+    override suspend fun execute() {
+        while (true) {
+            if(executions == runFor) {
+                print("Exiting")
+                exit()
+            }
+            print("Sleeping")
+            sleep(1)
+        }
+    }
+
 }

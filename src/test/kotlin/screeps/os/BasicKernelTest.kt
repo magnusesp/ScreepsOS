@@ -210,4 +210,16 @@ class BasicKernelTest : KernelTest() {
         assertEquals(3, waitingProgram.executions)
         assertEquals(7, sleepingProgram.executions)
     }
+
+    @Test
+    fun exitingProgram() {
+        val exitingProgram = ExitingProgram(5)
+        kernel.spawnProcess(exitingProgram, 10)
+
+        repeat(10) {
+            kernel.loop()
+        }
+
+        assertEquals(6, exitingProgram.executions)
+    }
 }
