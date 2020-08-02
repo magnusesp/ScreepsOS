@@ -3,7 +3,10 @@ An Kotlin coroutine based operatingsystem framework for Screeps
 
 
 ### How to get started
-All you need to do is to implement your own `Scheduler`, give the function to know which tick it is (`{ Game.time }` will do) and spawn your first process:
+You need to:
+- Implement your own `Scheduler` (feel free to base it on the provided `ExampleScheduler`)
+- Give the function to know which tick it is (`{ Game.time }` will do)
+- Spawn your first process:
 
 ```
 val scheduler = YourScheduler()
