@@ -1,8 +1,5 @@
 package screeps.os
 
-import kotlin.coroutines.suspendCoroutine
-
-
 abstract class Program {
     open fun getProgramName() = "${this::class.simpleName} (${_process?.pid})"
 
@@ -18,25 +15,6 @@ abstract class Program {
     }
 
     fun changePriority(priority: Int) = process.changePriority(priority)
-
-    fun exit() = process.exit()
-
-    suspend fun yield(): Any? = suspendCoroutine { continuation ->
-        Kernel.kernel.storeContinuation(continuation)
-    }
-
-    suspend fun sleep(ticks: Int): Any? = suspendCoroutine { continuation ->
-        val process = continuation.context[Process.Key]
-                ?: throw NoProcessContextException("Continuation $continuation is missing a Process context")
-
-        process.sleepUntil(Kernel.kernel.getTick() + ticks)
-        Kernel.kernel.storeContinuation(continuation)
-    }
-
-    suspend fun wait(condition: () -> Boolean, checkInterval: Int = 1) {
-        while (!condition.invoke())
-            sleep(checkInterval)
-    }
 
     abstract suspend fun execute()
 }
