@@ -1,5 +1,7 @@
 package screeps.os
 
+import screeps.os.examples.ExampleScheduler
+import screeps.os.examples.MockGameObject
 import kotlin.test.BeforeTest
 
 open class KernelTest {
@@ -16,12 +18,8 @@ open class KernelTest {
         MockGameObj.tick = 0
         MockGameObj.cpu = 0
 
-        kernel = Kernel.create {MockGameObj.tick++}
+        val scheduler = ExampleScheduler(MockGameObj)
 
-        val scheduler = ExampleScheduler(kernel)
-
-        kernel.setScheduler(scheduler)
-
-        scheduler.setGameObject(MockGameObj)
+        kernel = Kernel.create(scheduler) { MockGameObj.tick++ }
     }
 }

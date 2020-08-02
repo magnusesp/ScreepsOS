@@ -1,15 +1,13 @@
-package screeps.os
+package screeps.os.examples
 
-class ExampleScheduler(kernel: Kernel) : Scheduler(kernel) {
+import screeps.os.Kernel
+import screeps.os.Process
+import screeps.os.Scheduler
+
+class ExampleScheduler(private val mockGameObject: MockGameObject): Scheduler() {
     private val processes = mutableMapOf<Int, Process>()
     private val runQueue = mutableListOf<Process>() // TODO Should be a heap
     private val sleepingProcesses = mutableSetOf<Process>()
-
-    private lateinit var mockGameObject: MockGameObject
-    fun setGameObject(mock: MockGameObject) {
-        mockGameObject = mock
-
-    }
 
     override fun addProcess(process: Process) {
         processes[process.pid]= process
@@ -44,7 +42,7 @@ class ExampleScheduler(kernel: Kernel) : Scheduler(kernel) {
     private fun reorderRunQueue() = runQueue.sortBy { it.getPriority() }
 
     private fun wakeSleepingProcesses() {
-        val wakeUpThese = sleepingProcesses.filter { it.readyAt() <= kernel.getTick() }
+        val wakeUpThese = sleepingProcesses.filter { it.readyAt() <= Kernel.kernel.getTick() }
 
         sleepingProcesses.removeAll(wakeUpThese)
         runQueue.addAll(wakeUpThese)

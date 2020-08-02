@@ -4,19 +4,11 @@ import kotlin.coroutines.Continuation
 import kotlin.coroutines.createCoroutine
 import kotlin.coroutines.resume
 
-open class Kernel(private val tickFunction: () -> Int) {
+open class Kernel(private val scheduler: Scheduler, private val tickFunction: () -> Int) {
     private var tick = 0
 
     private var nextPid = 0
     private val continuations = mutableMapOf<Int, Continuation<Any?>>()
-
-    private var _scheduler: Scheduler? = null
-    private val scheduler: Scheduler
-        get() = _scheduler ?: throw NoSchedulerSetException()
-
-    fun setScheduler(scheduler: Scheduler) {
-        _scheduler = scheduler
-    }
 
     fun spawnProcess(program: Program, priority: Int): Int {
         val process = Process(nextPid++, priority, scheduler)
@@ -66,8 +58,8 @@ open class Kernel(private val tickFunction: () -> Int) {
         val kernel: Kernel
             get() = _kernel ?: throw NoKernelSetException()
 
-        fun create(tickFunction: () -> Int) : Kernel {
-            _kernel = Kernel(tickFunction)
+        fun create(scheduler: Scheduler, tickFunction: () -> Int) : Kernel {
+            _kernel = Kernel(scheduler, tickFunction)
             return kernel
         }
     }
