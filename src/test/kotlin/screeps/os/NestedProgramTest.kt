@@ -20,7 +20,7 @@ class NestedProgramTest : KernelTest() {
     }
 
     @Test
-    fun moduloProgram() {
+    fun callingWaitInSomethingNotAProgram() {
         val moduloProgram = ModuloProgram()
         kernel.spawnProcess(moduloProgram, 10)
 

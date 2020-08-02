@@ -1,10 +1,5 @@
 package screeps.os
 
-import screeps.os.yield
-import screeps.os.sleep
-import screeps.os.wait
-import screeps.os.exit
-
 class ProviderProgram : SleepingProgram() {
 
     suspend fun getXExecutionIds(amount: Int) : List<Int> {
@@ -19,7 +14,9 @@ class ProviderProgram : SleepingProgram() {
 
         return executionList
     }
+}
 
+class ModuloNotAProgram() {
     suspend fun waitForTickModuloX(modulo: Int) : Int {
 
         wait({Kernel.kernel.getTick() % modulo == 0})
@@ -57,8 +54,7 @@ class ModuloProgram : Program() {
     var secondTick = 0
 
     override suspend fun execute() {
-        val providerProgram = ProviderProgram()
-        val provPid = Kernel.kernel.spawnProcess(providerProgram, 10)
+        val moduloNotAProgram = ModuloNotAProgram()
 
         println("${getProgramName()} Started provider program, going to sleep")
         sleep(5)
@@ -66,17 +62,15 @@ class ModuloProgram : Program() {
         val modulo = 3
         println("${getProgramName()} Getting the first tick that is modulo $modulo")
 
-        firstTick = providerProgram.waitForTickModuloX(modulo)
+        firstTick = moduloNotAProgram.waitForTickModuloX(modulo)
         println("${getProgramName()} The first tick that is modulo $modulo is $firstTick")
 
 
         sleep(1)
         println("${getProgramName()} Getting the second tick that is modulo $modulo")
 
-        secondTick = providerProgram.waitForTickModuloX(modulo)
+        secondTick = moduloNotAProgram.waitForTickModuloX(modulo)
         println("${getProgramName()} The second tick that is modulo $modulo is $secondTick")
-
-        Kernel.kernel.killProcess(provPid)
         exit()
     }
 
