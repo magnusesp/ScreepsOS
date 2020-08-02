@@ -27,7 +27,7 @@ class NestedProgramTest : KernelTest() {
         assertEquals(0, moduloProgram.firstTick)
         assertEquals(0, moduloProgram.secondTick)
 
-        repeat(10) {
+        repeat(10) { // Counting from 0
             kernel.loop()
         }
 
