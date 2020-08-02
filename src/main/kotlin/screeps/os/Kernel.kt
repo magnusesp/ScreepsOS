@@ -31,8 +31,13 @@ open class Kernel(private val scheduler: Scheduler, private val tickFunction: ()
         var pid: Int? = scheduler.getNextPid()
 
         while(pid != null) {
-            continuations[pid]?.resume(Unit)
+            val cont = continuations.remove(pid)
                     ?: throw NoSuchProcessException("Kernel doesn't have a continuation for pid $pid")
+
+            cont.resume(Unit)
+
+            if(!continuations.containsKey(pid))
+                killProcess(pid)
 
             pid = scheduler.getNextPid()
         }

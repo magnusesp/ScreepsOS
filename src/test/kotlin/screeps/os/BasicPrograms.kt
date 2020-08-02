@@ -52,5 +52,14 @@ class ExitingProgram(private val runFor: Int) : TestProgram() {
             sleep(1)
         }
     }
+}
 
+class FinishingProgram : TestProgram() {
+    override suspend fun execute() {
+        print("Sleeping 1 tick")
+        sleep(1)
+        print("Sleeping 1 tick")
+        sleep(1)
+        print("Finishing")
+    }
 }
