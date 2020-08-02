@@ -8,7 +8,7 @@ open class Kernel(private val scheduler: Scheduler, private val tickFunction: ()
     private var tick = 0
 
     private var nextPid = 0
-    private val continuations = mutableMapOf<Int, Continuation<Any?>>()
+    private val continuations = mutableMapOf<Int, Continuation<Unit>>()
 
     fun spawnProcess(program: Program, priority: Int): Int {
         val process = Process(nextPid++, priority, scheduler)
@@ -16,7 +16,7 @@ open class Kernel(private val scheduler: Scheduler, private val tickFunction: ()
         program.setProcess(process)
 
         val body: suspend () -> Unit = { program.execute() }
-        continuations[process.pid] = body.createCoroutine(Continuation(process) {}).unsafeCast<Continuation<Any?>>()
+        continuations[process.pid] = body.createCoroutine(Continuation(process) {})
 
         scheduler.addProcess(process)
 
