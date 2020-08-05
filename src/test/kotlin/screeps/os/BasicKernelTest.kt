@@ -234,4 +234,15 @@ class BasicKernelTest : KernelTest() {
 
         assertEquals(3, finishingProgram.executions)
     }
+
+    @Test
+    fun catchingException() {
+        val exceptionProgram = ExceptionProgram()
+        kernel.spawnProcess(exceptionProgram, 10)
+
+        repeat(10) {
+            kernel.loop()
+        }
+
+    }
 }

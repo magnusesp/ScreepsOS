@@ -1,4 +1,4 @@
-package screeps.os
+    package screeps.os
 
 import kotlin.coroutines.Continuation
 import kotlin.coroutines.createCoroutine
@@ -15,7 +15,14 @@ open class Kernel(private val scheduler: Scheduler, private val tickFunction: ()
 
         program.setProcess(process)
 
-        val body: suspend () -> Unit = { program.execute() }
+        val body: suspend () -> Unit = {
+            try {
+                program.execute()
+            } catch (e: Exception) {
+                // TODO Handle exceptions somehow
+                println("Got Exception $e")
+            }
+        }
         continuations[process.pid] = body.createCoroutine(Continuation(process) {})
 
         scheduler.addProcess(process)
@@ -36,6 +43,7 @@ open class Kernel(private val scheduler: Scheduler, private val tickFunction: ()
 
             cont.resume(Unit)
 
+            // If the process doesn't store a new continuation it's done
             if(!continuations.containsKey(pid))
                 killProcess(pid)
 

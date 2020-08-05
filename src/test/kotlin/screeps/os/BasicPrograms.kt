@@ -63,3 +63,12 @@ class FinishingProgram : TestProgram() {
         print("Finishing")
     }
 }
+
+class ExceptionProgram: TestProgram() {
+    override suspend fun execute() {
+        print("Sleeping 1 tick")
+        sleep(1)
+        print("Throwing exception")
+        throw Exception("Exception from the ExceptionProgram")
+    }
+}
