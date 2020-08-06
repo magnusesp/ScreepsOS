@@ -9,9 +9,11 @@ open class Kernel(private val scheduler: Scheduler, private val tickFunction: ()
 
     private var nextPid = 0
     private val continuations = mutableMapOf<Int, Continuation<Unit>>()
+    private val processTable = mutableMapOf<Int, Process>()
 
     fun spawnProcess(program: Program, priority: Int): Int {
         val process = Process(nextPid++, priority, scheduler)
+        processTable[process.pid] = process
 
         program.setProcess(process)
 
@@ -21,6 +23,7 @@ open class Kernel(private val scheduler: Scheduler, private val tickFunction: ()
             } catch (e: Exception) {
                 // TODO Handle exceptions somehow
                 println("Got Exception $e")
+                program.setException(e)
             }
         }
         continuations[process.pid] = body.createCoroutine(Continuation(process) {})
@@ -41,6 +44,7 @@ open class Kernel(private val scheduler: Scheduler, private val tickFunction: ()
             val cont = continuations.remove(pid)
                     ?: throw NoSuchProcessException("Kernel doesn't have a continuation for pid $pid")
 
+            processTable[pid]?.setState(Process.State.RUNNING)
             cont.resume(Unit)
 
             // If the process doesn't store a new continuation it's done
@@ -60,7 +64,12 @@ open class Kernel(private val scheduler: Scheduler, private val tickFunction: ()
 
     fun killProcess(pid: Int) {
         continuations.remove(pid)
-        scheduler.removeProcess(pid)
+
+        val process = processTable[pid]
+                ?: throw NoSuchProcessException("Process with pid $pid is not in the process table at kill time")
+
+        process.setState(Process.State.KILLED)
+        scheduler.removeProcess(process)
     }
 
     fun getTick() = tick
@@ -79,6 +88,5 @@ open class Kernel(private val scheduler: Scheduler, private val tickFunction: ()
 }
 
 class NoKernelSetException : Exception("Kernel hasn't been set")
-class NoSchedulerSetException : Exception("Kernel has no scheduler")
 class NoSuchProcessException(message: String) : Exception(message)
 class NoProcessContextException(message: String) : Exception(message)

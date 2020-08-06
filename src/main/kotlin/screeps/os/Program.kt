@@ -14,6 +14,15 @@ abstract class Program {
         _process = proc
     }
 
+    fun getState() = process.getState()
+
+    private var exception: Exception? = null
+    fun getException() = exception
+    fun setException(e: Exception) {
+        process.setState(Process.State.EXCEPTION)
+        exception = e
+    }
+
     fun changePriority(priority: Int) = process.changePriority(priority)
 
     abstract suspend fun execute()
