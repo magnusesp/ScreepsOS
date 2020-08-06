@@ -4,7 +4,7 @@ import screeps.os.examples.ExampleScheduler
 import screeps.os.examples.MockGameObject
 import kotlin.test.BeforeTest
 
-open class KernelTest {
+open class KernelTestSetup {
     protected lateinit var kernel: Kernel
 
     object MockGameObj : MockGameObject {
@@ -21,5 +21,13 @@ open class KernelTest {
         val scheduler = ExampleScheduler(MockGameObj)
 
         kernel = Kernel.create(scheduler) { MockGameObj.tick++ }
+    }
+}
+
+abstract class TestProgram : Program() {
+    var executions = 0
+
+    protected fun print(nextState: String) {
+        println("${getProgramName()} executing for the ${++executions}. time. $nextState")
     }
 }

@@ -3,7 +3,7 @@ package screeps.os
 import kotlin.test.Test
 import kotlin.test.assertEquals
 
-class NestedProgramTest : KernelTest() {
+class NestedProgramTest : KernelTestSetup() {
 
     @Test
     fun requestingProgram() {
@@ -18,21 +18,44 @@ class NestedProgramTest : KernelTest() {
 
         assertEquals(listOf(5,6,7,8,9), requesterProgram.getIds())
     }
+}
 
-    @Test
-    fun callingWaitInSomethingNotAProgram() {
-        val moduloProgram = ModuloProgram()
-        kernel.spawnProcess(moduloProgram, 10)
+class ProviderProgram : SleepingProgram() {
 
-        assertEquals(0, moduloProgram.firstTick)
-        assertEquals(0, moduloProgram.secondTick)
+    suspend fun getXExecutionIds(amount: Int) : List<Int> {
+        val executionList = mutableListOf<Int>()
 
-        repeat(10) { // Counting from 0
-            kernel.loop()
+        executionList.add(executions)
+
+        while(executionList.size < amount) {
+            sleep(1)
+            executionList.add(executions)
         }
 
-        assertEquals(6, moduloProgram.firstTick)
-        assertEquals(9, moduloProgram.secondTick)
+        return executionList
+    }
+}
+
+class RequesterProgram : Program() {
+    val ids = mutableListOf<Int>()
+
+    override suspend fun execute() {
+        val providerProgram = ProviderProgram()
+        val provPid = Kernel.kernel.spawnProcess(providerProgram, 10)
+
+        println("${getProgramName()} Started provider program, going to sleep")
+        sleep(5)
+
+        val numberOfExecutionIdsToRequest = 5
+        println("${getProgramName()} Going to request $numberOfExecutionIdsToRequest execution ids")
+
+        ids.addAll(providerProgram.getXExecutionIds(numberOfExecutionIdsToRequest))
+
+        println("${getProgramName()} Currently have the following ids: $ids")
+
+        Kernel.kernel.killProcess(provPid)
+        exit()
     }
 
+    fun getIds() = ids
 }
