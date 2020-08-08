@@ -3,10 +3,17 @@ package screeps.os
 import kotlin.coroutines.CoroutineContext
 import kotlin.coroutines.suspendCoroutine
 
-class Process(val pid: Int, private var priority: Int, private val scheduler: Scheduler) : CoroutineContext.Element {
+class Process(val pid: Int, private var priority: Int, private val scheduler: Scheduler, restorePersistenceId: Int? = null) : CoroutineContext.Element {
     object Key : CoroutineContext.Key<Process>
 
     override val key = Key
+
+    private var persistenceId: Int? = restorePersistenceId
+    fun setPersistenceId(perId: Int) {
+        println("Setting per id $perId for pid $pid")
+        persistenceId = perId
+    }
+    fun getPersistenceId() = persistenceId
 
     enum class State {
         NEW,

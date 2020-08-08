@@ -14,7 +14,7 @@ open class KernelTestSetup {
     }
 
     @BeforeTest
-    fun reset() {
+    fun resetKernel() {
         MockGameObj.tick = 0
         MockGameObj.cpu = 0
 

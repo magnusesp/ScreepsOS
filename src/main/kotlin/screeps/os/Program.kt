@@ -14,6 +14,7 @@ abstract class Program {
         _process = proc
     }
 
+    fun getPersistenceId() = process.getPersistenceId()
     fun getState() = process.getState()
 
     private var exception: Exception? = null

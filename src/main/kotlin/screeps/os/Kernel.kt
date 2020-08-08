@@ -11,8 +11,8 @@ open class Kernel(private val scheduler: Scheduler, private val tickFunction: ()
     private val continuations = mutableMapOf<Int, Continuation<Unit>>()
     private val processTable = mutableMapOf<Int, Process>()
 
-    fun spawnProcess(program: Program, priority: Int): Int {
-        val process = Process(nextPid++, priority, scheduler)
+    fun spawnProcess(program: Program, priority: Int, restorePersistenceId: Int? = null): Int {
+        val process = Process(nextPid++, priority, scheduler, restorePersistenceId)
         processTable[process.pid] = process
 
         program.setProcess(process)
