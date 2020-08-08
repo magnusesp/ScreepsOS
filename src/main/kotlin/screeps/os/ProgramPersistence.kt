@@ -17,6 +17,7 @@ class ProgramPersistence {
     companion object {
         private var persistenceCounter = 0
         private val persistedPrograms = mutableMapOf<Int, String>()
+        private val persistedProgramVariables = mutableMapOf<Int, String>()
 
         fun persistProgram(continuation: Continuation<Unit>) : Int {
             val persistenceId = persistenceCounter++
@@ -39,10 +40,27 @@ class ProgramPersistence {
                     }
             }
 
+            val localVariables = js("{}")
+
+            val tmp = continuation.asRecord()["\$this"]
+            tmp
+                    ?.asRecord()
+                    ?.keys
+                    ?.toList()
+                    ?.forEach {
+                        val value = tmp.asRecord()[it]
+                        println("\$this : $it -> $value")
+
+                        if(!value.toString().contains("object"))
+                        localVariables[it] = value
+                    }
+
             val serialized = JSON.stringify(plain as? Any)
             persistedPrograms[persistenceId] = serialized.asDynamic()
 
-            println("Persisted program with id $persistenceId : $serialized")
+            persistedProgramVariables[persistenceId] = JSON.stringify(localVariables as? Any).asDynamic()
+
+            println("Persisted program with id $persistenceId : $serialized and ${persistedProgramVariables[persistenceId]}")
 
             return persistenceId
         }
@@ -56,6 +74,7 @@ class ProgramPersistence {
             println("Process ${process.pid} requests restore from $persistenceId")
 
             val oldState = persistedPrograms.remove(persistenceId)
+            val persistedVariables = JSON.parse<Any>(persistedProgramVariables.remove(persistenceId) ?: "{}")
 
             if (oldState == null) {
                 println("No such state $persistenceId")
@@ -72,11 +91,12 @@ class ProgramPersistence {
             if(currentState >= resumeFromState)
                 return // we would go backwards in time
 
-            restoreState(continuation, deserializedState)
+            restoreState(continuation, deserializedState, persistedVariables)
         }
 
-        private fun restoreState(continuation: Continuation<Unit>, persistedState: Any) {
+        private fun restoreState(continuation: Continuation<Unit>, persistedState: Any, persistedVariables: Any) {
             js("Object").assign(continuation, persistedState)
+            js("Object").assign(continuation.asDynamic()["\$this"], persistedVariables)
 
             val evalfn: (String) -> dynamic = ::eval
 

@@ -7,13 +7,14 @@ class ProgramPersistenceTest : KernelTestSetup() {
 
     @Test
     fun simplePersistenceTest() {
-        val persistentProgramA = ProgramWithSmallState()
-        assertEquals(0, persistentProgramA.intVariable)
+        val firstIntVariable = 1
+        val persistentProgramA = ProgramWithSmallState(firstIntVariable)
+        assertEquals(firstIntVariable, persistentProgramA.intVariable)
 
         kernel.spawnProcess(persistentProgramA, priority = 10)
 
         kernel.loop()
-        assertEquals(0, persistentProgramA.intVariable)
+        assertEquals(firstIntVariable, persistentProgramA.intVariable)
 
         kernel.loop()
         assertEquals(Process.State.EXIT, persistentProgramA.getState())
@@ -22,49 +23,30 @@ class ProgramPersistenceTest : KernelTestSetup() {
 
         resetKernel()
 
-        val persistentProgramB = ProgramWithSmallState()
-        assertEquals(0, persistentProgramB.intVariable)
+        val secondIntVariable = 2
+        val persistentProgramB = ProgramWithSmallState(secondIntVariable)
+        assertEquals(secondIntVariable, persistentProgramB.intVariable)
 
         kernel.spawnProcess(persistentProgramB, priority = 10, restorePersistenceId = persistenceIdA)
 
         kernel.loop()
-        assertEquals(1, persistentProgramB.intVariable)
+        assertEquals(firstIntVariable, persistentProgramB.intVariable)
 
         kernel.loop()
         assertEquals(Process.State.EXIT, persistentProgramB.getState())
-
-        val persistenceIdB = persistentProgramB.getPersistenceId()
-
-        resetKernel()
-
-        val persistentProgramC = ProgramWithSmallState()
-        assertEquals(0, persistentProgramC.intVariable)
-
-        kernel.spawnProcess(persistentProgramC, priority = 10, restorePersistenceId = persistenceIdB)
-
-        kernel.loop()
-        assertEquals(2, persistentProgramC.intVariable)
-
-        kernel.loop()
-        assertEquals(Process.State.EXIT, persistentProgramC.getState())
     }
 
 
 }
 
-class ProgramWithSmallState : TestProgram() {
-    var intVariable = 0
-    var stringVariable = "Initialized"
-
+class ProgramWithSmallState(val intVariable: Int) : TestProgram() {
     override suspend fun execute() {
         println("${getProgramName()} starting up")
         restoreIfNecessary()
-        print("Maybe restored? intVariable = $intVariable stringVariable = $stringVariable")
+        print("Not restored intVariable = $intVariable")
         sleep(1)
-
-        intVariable++
-        stringVariable = "Persisted $intVariable times"
         persistProgram()
+        print("Restored intVariable = $intVariable")
         exit()
     }
 }
